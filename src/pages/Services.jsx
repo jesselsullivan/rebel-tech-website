@@ -1,0 +1,4 @@
+import { siteConfig as site } from '../siteConfig';
+import SectionTitle from '../components/SectionTitle';
+import { Link } from 'react-router-dom';
+export default function Services(){return <section className="page"><div className="container"><SectionTitle eyebrow="REBEL TECH" title="Services" text="Technology services for homes, businesses, and everything in between."/><div className="service-list">{site.services.map(s=><article key={s.title} className="service-detail"><div className="service-icon">{s.icon}</div><div><h2>{s.title}</h2><p>{s.text}</p></div></article>)}</div><div className="cta-card"><div><h2>Need something not listed?</h2><p>Tell us what you're trying to accomplish and we'll help figure out the right solution.</p></div><Link className="btn btn-red" to="/service-request">Request Service</Link></div></div></section>}
