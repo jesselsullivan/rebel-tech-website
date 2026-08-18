@@ -1,26 +1,75 @@
 import { Link } from 'react-router-dom';
+import { Button } from '@mui/material';
 import { siteConfig as site } from '../siteConfig';
 import SectionTitle from '../components/SectionTitle';
+import ServiceCard from '../components/ServiceCard';
+import VideoHero from '../components/VideoHero';
 
 export default function Home() {
-  return <>
-    <section className="hero">
-      <div className="hero-art"><img src={site.assets.hero} alt="Rebel Tech technology and Oxford, Mississippi branding" /></div>
-      <div className="hero-copy">
-        <div className="eyebrow">OXFORD, MISSISSIPPI</div>
-        <h1>CONNECT.<br />REPAIR.<br /><span>INSTALL.</span></h1>
-        <p>Technology solutions that work for your home and business.</p>
-        <div className="hero-buttons"><Link className="btn btn-red" to="/service-request">Request Service</Link><Link className="btn btn-outline" to="/services">View Services</Link></div>
-        <div className="hero-meta"><a href={`tel:${site.phone}`}>☎ {site.phoneDisplay}</a><span>⌖ {site.city}</span></div>
-      </div>
-    </section>
+  return (
+    <>
+      <VideoHero />
 
-    <section className="trust-strip"><div>✓ LOCAL &amp; RELIABLE</div><div>✓ COMMERCIAL &amp; RESIDENTIAL</div><div>✓ QUALITY WORK</div><div>✓ FAST RESPONSE</div></section>
+      <section className="trust-strip">
+        <div>✓ LOCAL & RELIABLE</div>
+        <div>✓ COMMERCIAL & RESIDENTIAL</div>
+        <div>✓ QUALITY WORK</div>
+        <div>✓ FAST RESPONSE</div>
+      </section>
 
-    <section className="section"><div className="container"><SectionTitle eyebrow="WHAT WE DO" title="Our Services" text="From structured cabling to device repair and smart-home technology, Rebel Tech brings the pieces together." /><div className="service-grid">{site.services.map(s => <article className="service-card" key={s.title}><div className="service-icon">{s.icon}</div><h3>{s.title}</h3><p>{s.text}</p><Link to="/services">Learn More →</Link></article>)}</div></div></section>
+      <section className="section services-section">
+        <div className="container">
+          <SectionTitle
+            eyebrow="WHAT WE DO"
+            title="Technology, without the headache."
+            text="From structured cabling to device repair and smart-home technology, Rebel Tech brings the pieces together."
+          />
+          <div className="row g-4">
+            {site.services.map(service => (
+              <div className="col-12 col-md-6 col-xl-3" key={service.title}>
+                <ServiceCard service={service} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-    <section className="navy-section"><div className="container split"><div><div className="eyebrow">WHY REBEL TECH?</div><h2>Technology done right.</h2><p>We focus on practical, dependable technology solutions—not unnecessary complexity.</p><ul className="check-list"><li>Professional installations</li><li>Honest, transparent service</li><li>Quality products and workmanship</li><li>Local Oxford, Mississippi business</li></ul><Link className="btn btn-red" to="/about">About Rebel Tech</Link></div><img className="van-image" src={site.assets.van} alt="Rebel Tech service van" /></div></section>
+      <section className="why-section">
+        <div className="container">
+          <div className="row align-items-center g-5">
+            <div className="col-lg-5">
+              <div className="eyebrow">WHY REBEL TECH?</div>
+              <h2>Professional technology.<br /><span>Local service.</span></h2>
+              <p>We solve the problem in front of us, explain the options clearly, and build systems that are reliable and maintainable.</p>
+              <ul className="check-list">
+                <li>Professional installations</li>
+                <li>Honest, transparent service</li>
+                <li>Quality products and workmanship</li>
+                <li>Local Oxford, Mississippi business</li>
+              </ul>
+              <Button component={Link} to="/about" variant="contained" className="mui-red-button">About Rebel Tech</Button>
+            </div>
+            <div className="col-lg-7">
+              <div className="van-showcase">
+                <img src={site.assets.van} alt="Rebel Tech Ford Transit service van" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-    <section className="section area-section"><div className="container area-box"><div><div className="eyebrow">LOCAL SERVICE</div><h2>Oxford &amp; surrounding areas</h2><p>Based in Oxford, Mississippi, Rebel Tech serves residential and commercial customers throughout the surrounding area.</p></div><Link className="btn btn-navy" to="/contact">Get In Touch</Link></div></section>
-  </>;
+      <section className="area-section">
+        <div className="container">
+          <div className="area-box">
+            <div>
+              <div className="eyebrow">LOCAL SERVICE</div>
+              <h2>Oxford & surrounding areas</h2>
+              <p>Based in Oxford, Mississippi, Rebel Tech serves residential and commercial customers throughout the surrounding area.</p>
+            </div>
+            <Button component={Link} to="/contact" variant="contained" className="mui-navy-button">Get In Touch</Button>
+          </div>
+        </div>
+      </section>
+    </>
+  );
 }
