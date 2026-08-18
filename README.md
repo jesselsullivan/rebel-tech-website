@@ -1,68 +1,107 @@
-# Rebel Tech Oxford — Website v2
+# Rebel Tech Oxford Website
 
-React + Vite + Express website designed for GoDaddy Node.js Hosting.
+React + Vite + Node.js website for Rebel Tech Oxford LLC.
 
-## What is included
-- Home, Services, Service Request, About, Contact pages
-- Deep Oxford/Ole Miss-inspired navy (#061d49), white, gray, and Rebel Tech red palette
-- Actual Rebel Tech hero artwork, icon, and service-van image supplied by the owner
-- Responsive mobile navigation
-- RepairShopr customer portal link: https://rebeltechoxford.repairshopr.com
-- Server-side RepairShopr API integration scaffold
-- Centralized editable business settings in `src/siteConfig.js`
+## Stack
 
-## Run locally
+- React 18
+- Vite
+- Bootstrap 5.3
+- Material UI buttons/forms
+- Express / Node.js
+- RepairShopr API proxy
+- Transparent Rebel Tech artwork
+- Responsive video hero
+
+## Local setup
+
+Requires Node.js 20+.
+
 ```bash
 npm install
 npm run dev
 ```
+
+Open http://localhost:5173
+
 Production test:
+
 ```bash
 npm run build
 npm start
 ```
-Then open http://localhost:3000.
 
-## GitHub
-The repository root should contain `package.json` directly. Do not put the project inside another folder. Do not commit `node_modules`, `dist`, `.env`, or API keys.
+Open http://localhost:3000
 
-## GoDaddy
-GoDaddy Node.js Hosting requires a valid root `package.json` with a `start` script and an app that listens on `process.env.PORT`. This project is structured that way.
+## RepairShopr
 
-Recommended flow:
-1. Create a private GitHub repo.
-2. Upload the CONTENTS of this folder to the repository root.
-3. Commit to `main`.
-4. GoDaddy Node.js Hosting → Connect GitHub → choose repo → choose `main` → Import & Deploy.
-5. Open the preview URL and test it.
-6. Connect `rebeltechoxford.com` in GoDaddy Settings.
-7. Publish when ready.
+Copy `.env.example` to `.env` and provide:
 
-## RepairShopr setup — recommended first steps
-You currently have the subdomain `rebeltechoxford.repairshopr.com` but no ticket workflow yet.
+- `REPAIRSHOPR_SUBDOMAIN`
+- `REPAIRSHOPR_API_KEY`
+- `REPAIRSHOPR_TICKET_FORM_ID`
 
-1. Log in to RepairShopr.
-2. Create your customer/ticket intake workflow before exposing a direct ticket form.
-3. Create a New Ticket Form with fields such as:
-   - Customer name
-   - Email
-   - Phone
-   - Service category
-   - Problem/project description
-   - Preferred contact method
-   - Service location (optional)
-   - Urgency/priority (optional)
-4. Decide whether website submissions should automatically create a customer when one does not exist, or whether you want customers to use the portal first.
-5. In RepairShopr API documentation, inspect the `GET /new_ticket_forms` and `POST /new_ticket_forms/{id}/process_form` endpoints for your account and verify the exact field names/payload for your form.
-6. Put the resulting form ID into GoDaddy's environment secret `REPAIRSHOPR_TICKET_FORM_ID`.
-7. Put the API key into GoDaddy's secret `REPAIRSHOPR_API_KEY`. NEVER commit the key to GitHub.
+The API key stays server-side and is never sent to the browser.
 
-The API integration is deliberately conservative until the form exists. The site can already send customers to the RepairShopr portal now; direct ticket submission should be enabled only after the form fields are verified.
+The exact field mapping for the New Ticket Form is centralized in `server/index.js`; verify the field names against the New Ticket Form configured in your RepairShopr account before going live.
 
-## Brand assets
-- `public/assets/rebel-tech-hero.jpg` — supplied hero artwork
-- `public/assets/rebel-tech-icon.png` — supplied RT icon
-- `public/assets/rebel-tech-van.jpg` — supplied van photo
+## GoDaddy Node.js Hosting
 
-## Easy edits
-Edit `src/siteConfig.js` for phone, city, service area, RepairShopr portal, form ID, and service descriptions.
+Upload/deploy the project as a Node.js application. GoDaddy's Node.js hosting supports zipped source deployments and environment secrets. The application starts with:
+
+```bash
+npm start
+```
+
+Set the RepairShopr secrets in GoDaddy rather than committing them to the project.
+
+## Hero video
+
+The hero uses free commercial-use networking footage from Coverr as a remote MP4 source. The source page is documented in `src/siteConfig.js`.
+
+If you prefer to self-host the video, place an MP4 in `public/assets/` and change `siteConfig.video.mp4`.
+
+
+## Contact email delivery
+
+The public Contact page sends messages to `info@rebeltechoxford.com` through Brevo SMTP. The SMTP login is prefilled as `b58e03001@smtp-brevo.com`; the SMTP key is intentionally not included in this ZIP. Set `SMTP_PASS` in the GoDaddy Node.js environment.
+
+Brevo's SMTP relay uses `smtp-relay.brevo.com`; port 587 with TLS is the recommended starting configuration. The `MAIL_FROM` sender must be a verified/authenticated Brevo sender/domain.
+
+## Local development
+
+Use `START-REBEL-TECH.bat` on Windows. It starts both processes:
+
+- Vite frontend: http://localhost:5173
+- Node/Express API: http://localhost:3000
+
+Vite proxies `/api/*` to the Node API during development. This is important for the contact and RepairShopr forms; running only `npm run dev` will no longer be enough to test API-backed forms.
+
+You can also run them manually in two terminals:
+
+```text
+npm run dev:server
+npm run dev
+```
+
+The contact form always returns JSON on success and error, so the frontend won't fail with `Unexpected end of JSON input` if the API returns an error response.
+
+
+## Local development
+
+Use `START-REBEL-TECH.bat` or run `npm run dev`. The Node/Express server now hosts the Vite development middleware and the `/api/*` endpoints on the **same port (3000)**. This prevents the contact form from accidentally posting to Vite and receiving an HTML fallback page instead of JSON.
+
+For local email testing, copy `.env.example` to `.env` and enter your Brevo SMTP key in `SMTP_PASS`. Never commit `.env`.
+
+
+## Environment secrets
+
+Use `.env.example` as the paste-in template. Do not commit a real `.env` file or API keys.
+
+Required for the current website integrations:
+
+- `REPAIRSHOPR_API_KEY` — your RepairShopr API key.
+- `REPAIRSHOPR_TICKET_FORM_ID` — the ID of the RepairShopr New Ticket Form the website should submit to.
+- `SMTP_PASS` — your Brevo SMTP key.
+
+The RepairShopr subdomain is already set to `rebeltech`. The website uses the New Ticket Form API endpoint to create tickets. RepairShopr's official API documentation confirms `GET /new_ticket_forms` and `POST /new_ticket_forms/{id}/process_form` for this workflow. 

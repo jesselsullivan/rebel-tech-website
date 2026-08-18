@@ -1,0 +1,3 @@
+Hero video source: Pexels — Blue Colored Cables
+Source page: https://www.pexels.com/video/blue-colored-cables-1085656/
+Free to use / commercial-use source. The website references the Pexels video CDN directly; if Pexels changes the CDN path, update src/siteConfig.js.
