@@ -15,6 +15,9 @@ export default function VideoHero() {
           <img src={site.assets.hero} alt="Rebel Tech Oxford technology services" />
         </div>
         <div className="hero-copy">
+          <div className="mobile-hero-brand" aria-label="Rebel Tech">
+            <span>REBEL</span> <b>TECH</b>
+          </div>
           <div className="eyebrow">OXFORD, MISSISSIPPI • COMMERCIAL & RESIDENTIAL</div>
           <h1>TECH SOLUTIONS<br /><span>THAT WORK.</span></h1>
           <p>From networks to devices to smart spaces—we keep you connected.</p>
