@@ -58,7 +58,7 @@ export default function ServiceRequest() {
             <div>
               <div className="eyebrow">NEW REQUEST</div>
               <h2>Let's get you connected.</h2>
-              <p className="muted">Submit a project, repair, cabling, AV, or smart-home request.</p>
+              <p className="muted">Submit a repair, network, business technology, cabling, AV, POS, or smart-home request.</p>
             </div>
             {forms.length > 0 && <span className="api-badge">RepairShopr connected</span>}
           </div>
@@ -67,7 +67,7 @@ export default function ServiceRequest() {
             <div className="col-md-6"><label>Name<input required value={formState.name} onChange={e=>setFormState({...formState,name:e.target.value})} placeholder="Your name" /></label></div>
             <div className="col-md-6"><label>Email<input required type="email" value={formState.email} onChange={e=>setFormState({...formState,email:e.target.value})} placeholder="you@example.com" /></label></div>
             <div className="col-md-6"><label>Phone<input value={formState.phone} onChange={e=>setFormState({...formState,phone:e.target.value})} placeholder="(662) 281-2970" /></label></div>
-            <div className="col-md-6"><label>Service Type<select value={formState.service} onChange={e=>setFormState({...formState,service:e.target.value})}><option value="">Select a service</option>{site.services.map(s=><option key={s.title}>{s.title}</option>)}</select></label></div>
+            <div className="col-md-6"><label>Service Type<select value={formState.service} onChange={e=>setFormState({...formState,service:e.target.value})}><option value="">Select a service</option>{[...site.services, ...(site.businessServices || [])].map(s=><option key={s.title}>{s.title}</option>)}</select></label></div>
             <div className="col-12"><label>What do you need help with?<textarea required rows="6" value={formState.description} onChange={e=>setFormState({...formState,description:e.target.value})} placeholder="Tell us about the issue or project..." /></label></div>
             <div className="col-12 d-flex align-items-center gap-3 flex-wrap">
               <Button type="submit" variant="contained" disabled={loading} className="mui-red-button">{loading ? <CircularProgress size={20} color="inherit" /> : 'Submit Request →'}</Button>

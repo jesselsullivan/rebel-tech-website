@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@mui/material';
 import { siteConfig as site } from '../siteConfig';
 import SectionTitle from '../components/SectionTitle';
-import ServiceCard from '../components/ServiceCard';
+import AudienceCard from '../components/AudienceCard';
 import VideoHero from '../components/VideoHero';
 
 export default function Home() {
@@ -22,14 +22,27 @@ export default function Home() {
           <SectionTitle
             eyebrow="WHAT WE DO"
             title="Technology, without the headache."
-            text="From structured cabling to device repair and smart-home technology, Rebel Tech brings the pieces together."
+            text="Whether you are building a business, fixing a device, or trying to make your technology work together, Rebel Tech can help."
           />
           <div className="row g-4">
-            {site.services.map(service => (
-              <div className="col-12 col-md-6 col-xl-3" key={service.title}>
-                <ServiceCard service={service} />
+            {site.audiences.map(audience => (
+              <div className="col-12 col-lg-4" key={audience.id}>
+                <AudienceCard audience={audience} />
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="section scope-section">
+        <div className="container">
+          <div className="scope-box">
+            <div>
+              <div className="eyebrow">TECH DISTRESS?</div>
+              <h2>Not sure where your problem fits?</h2>
+              <p>That's okay. You do not need to know the right technical term or pick the perfect service. Tell us what is going on and we will help figure out the right solution.</p>
+            </div>
+            <Button component={Link} to="/service-request" variant="contained" className="mui-red-button">Tell Us What's Going On →</Button>
           </div>
         </div>
       </section>
