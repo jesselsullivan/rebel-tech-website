@@ -32,6 +32,7 @@ button,input,textarea,select{font:inherit}
 .hero-overlay{background:linear-gradient(90deg,rgba(3,14,35,.92) 0%,rgba(4,20,48,.76) 46%,rgba(4,20,48,.5) 100%);z-index:1}
 .hero-inner{position:relative;z-index:2;min-height:690px;display:grid;grid-template-columns:1.05fr .95fr;align-items:center;padding:35px 0}
 .hero-art{align-self:center;position:relative;z-index:3}.hero-art img{width:100%;max-width:680px;display:block;filter:drop-shadow(0 20px 25px rgba(0,0,0,.4))}.hero-copy{position:relative;z-index:4;padding:30px 20px 70px 20px;max-width:760px}
+.mobile-hero-brand{display:none}
 .eyebrow{font-size:.73rem;font-weight:950;letter-spacing:.16em;color:var(--red2);text-transform:uppercase}
 .hero h1{font-size:clamp(3.4rem,6vw,6rem);line-height:.9;margin:12px 0 20px;font-weight:950;letter-spacing:-.07em}
 .hero h1 span,.why-section h2 span,.about h1 span{color:#ff3038}
@@ -39,6 +40,7 @@ button,input,textarea,select{font:inherit}
 .hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin:28px 0}
 .mui-red-button{background:var(--red)!important;color:#fff!important;font-weight:900!important;text-transform:uppercase!important;letter-spacing:.04em!important;box-shadow:0 8px 22px rgba(226,27,35,.28)!important}
 .mui-red-button:hover{background:#c9151c!important}
+.contact-form .mui-red-button{padding:12px 24px!important;min-height:48px!important;font-size:.82rem!important;line-height:1.2!important;border-radius:4px!important}
 .mui-outline-button{color:#fff!important;border-color:#fff!important;font-weight:900!important;text-transform:uppercase!important;letter-spacing:.04em!important}
 .mui-navy-button{background:var(--navy)!important;color:#fff!important;font-weight:900!important;text-transform:uppercase!important}
 .hero-meta{display:flex;gap:22px;flex-wrap:wrap;font-weight:850}.hero-meta a{color:#fff}
@@ -59,7 +61,38 @@ button,input,textarea,select{font:inherit}
 .footer-hours{display:grid;gap:3px;margin:18px 0;color:#cbd7e9;font-size:.9rem}.footer-hours strong{color:#fff;margin-bottom:3px}
 .site-footer{background:var(--navy);color:#fff;padding-top:58px}.footer-grid{display:grid;grid-template-columns:1.5fr .7fr 1fr;gap:45px;padding-bottom:42px}.footer-grid p{color:#cbd7e9}.footer-grid h4{margin:0 0 15px}.footer-grid a{display:block;margin:8px 0}.footer-grid a:hover{color:#ff3440}.footer-bottom{border-top:1px solid rgba(255,255,255,.13);padding:16px 4%;display:flex;justify-content:space-between;color:#b8c5d9;font-size:.73rem;text-transform:uppercase;letter-spacing:.08em}.footer-bottom span:first-child{color:#ff3440;font-weight:950}
 @media(max-width:1100px){.desktop-nav{gap:13px}.phone-link{display:none}.hero-copy{padding:0 7vw 65px}.hero{min-height:760px}.hero-inner{min-height:760px}}
-@media(max-width:720px){.nav-wrap{min-height:68px}.brand span{display:none}.desktop-nav,.header-actions{display:none}.mobile-menu{display:block}.hero{min-height:760px}.hero-inner{min-height:760px;padding-top:18px}.hero-copy{padding:0 7vw 55px}.hero h1{font-size:clamp(3rem,16vw,5rem)}.hero-copy>p{font-size:1rem}.trust-strip{grid-template-columns:1fr 1fr;gap:12px;font-size:.65rem}.section,.page,.why-section{padding:65px 0}.area-box,.cta-card,.portal-card{display:grid;padding:25px}.footer-grid{grid-template-columns:1fr;gap:28px}.footer-bottom{display:grid;gap:8px}.contact-info,.contact-form{padding:25px}.about-van{padding:10px}}
+@media(max-width:720px){
+  .nav-wrap{min-height:68px}
+  .brand span{display:none}
+  .desktop-nav,.header-actions{display:none}
+  .mobile-menu{display:block}
+  .hero{min-height:760px}
+  .hero-inner{min-height:760px;padding-top:18px;display:block}
+  .hero-art{display:none}
+  .hero-copy{padding:24px 7vw 55px;max-width:none}
+  .mobile-hero-brand{
+    display:block;
+    margin:0 0 28px;
+    color:#fff;
+    font-size:clamp(2.1rem,10vw,3.2rem);
+    line-height:1;
+    font-weight:950;
+    letter-spacing:-.065em;
+    text-transform:uppercase;
+  }
+  .mobile-hero-brand b{color:#ff3038}
+  .hero h1{font-size:clamp(3rem,16vw,5rem)}
+  .hero-copy>p{font-size:1rem}
+  .hero-actions{margin-top:24px}
+  .hero-meta{gap:14px}
+  .trust-strip{grid-template-columns:1fr 1fr;gap:12px;font-size:.65rem}
+  .section,.page,.why-section{padding:65px 0}
+  .area-box,.cta-card,.portal-card{display:grid;padding:25px}
+  .footer-grid{grid-template-columns:1fr;gap:28px}
+  .footer-bottom{display:grid;gap:8px}
+  .contact-info,.contact-form{padding:25px}
+  .about-van{padding:10px}
+}
 
 .audience-card{border:1px solid var(--line);padding:32px 28px;background:#fff;box-shadow:0 10px 30px rgba(6,29,73,.05);transition:.2s;display:flex;flex-direction:column;min-height:100%}
 .audience-card:hover{transform:translateY(-5px);box-shadow:var(--shadow)}
