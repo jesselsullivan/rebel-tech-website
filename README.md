@@ -9,7 +9,7 @@ React + Vite + Node.js website for Rebel Tech Oxford LLC.
 - Bootstrap 5.3
 - Material UI buttons/forms
 - Express / Node.js
-- RepairShopr API proxy
+- CRM API proxy
 - Transparent Rebel Tech artwork
 - Responsive video hero
 
@@ -33,7 +33,7 @@ npm start
 
 Open http://localhost:3000
 
-## RepairShopr
+## CRM integration
 
 Copy `.env.example` to `.env` and provide:
 
@@ -53,7 +53,7 @@ Upload/deploy the project as a Node.js application. GoDaddy's Node.js hosting su
 npm start
 ```
 
-Set the RepairShopr secrets in GoDaddy rather than committing them to the project.
+Set the CRM integration secrets in GoDaddy rather than committing them to the project.
 
 ## Hero video
 
@@ -104,4 +104,10 @@ Required for the current website integrations:
 - `REPAIRSHOPR_TICKET_FORM_ID` — the ID of the RepairShopr New Ticket Form the website should submit to.
 - `SMTP_PASS` — your Brevo SMTP key.
 
-The RepairShopr subdomain is already set to `rebeltech`. The website uses the New Ticket Form API endpoint to create tickets. RepairShopr's official API documentation confirms `GET /new_ticket_forms` and `POST /new_ticket_forms/{id}/process_form` for this workflow. 
+The RepairShopr subdomain is already set to `rebeltech`. The website uses the New Ticket Form API endpoint to create tickets. The server-side integration uses the configured CRM's lead and ticket-form endpoints; API credentials remain server-side. 
+
+## Customer Check-In / CRM flow
+
+The `/service-request` page is now a structured customer check-in. It captures contact information, customer type, need category, description, and preferred contact method. The server posts a lead to RepairShopr first. Requests that are eligible and have `REPAIRSHOPR_TICKET_FORM_ID` configured are also sent through the RepairShopr ticket form.
+
+Scheduling is intentionally kept separate from intake. `REPAIRSHOPR_SCHEDULING_WIDGET_URL` is reserved for the future availability widget so future appointment selection can use RepairShopr's real availability rather than inventing slots on the website.
