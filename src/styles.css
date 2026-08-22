@@ -164,3 +164,51 @@ a:focus-visible{
   .route-transition{animation:none}
   .desktop-nav a,.mobile-menu-panel a,.footer-grid a,.service-link{transition:none}
 }
+
+/* Rebel Tech check-in flow */
+.checkin-divider { margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid rgba(127,127,127,.22); }
+.checkin-divider h3 { margin: 0 0 .35rem; font-size: 1.05rem; }
+.checkin-choice-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+.checkin-choice { appearance:none; text-align:left; border:1px solid rgba(127,127,127,.28); background:transparent; border-radius:14px; padding:18px; cursor:pointer; transition:transform .18s ease,border-color .18s ease,background-color .18s ease,box-shadow .18s ease; }
+.checkin-choice:hover { transform:translateY(-1px); }
+.checkin-choice.selected { border-color:var(--red,#c81e2a); background:rgba(200,30,42,.07); box-shadow:0 0 0 2px rgba(200,30,42,.12); }
+.checkin-choice strong,.checkin-choice span { display:block; }
+.checkin-choice span { margin-top:5px; font-size:.9rem; opacity:.72; }
+.checkin-next-step { display:flex; flex-direction:column; gap:4px; padding:14px 16px; border-left:3px solid var(--red,#c81e2a); background:rgba(127,127,127,.06); border-radius:8px; }
+.checkin-next-step span { opacity:.76; }
+.schedule-placeholder { margin-top:28px; padding:22px; border:1px dashed rgba(127,127,127,.35); border-radius:14px; }
+.schedule-placeholder h3 { margin:.25rem 0 .35rem; }
+.schedule-placeholder p { margin:0; opacity:.75; }
+@media (max-width: 760px) { .checkin-choice-grid { grid-template-columns:1fr; } }
+@media (prefers-reduced-motion: reduce) { .checkin-choice { transition:none; } }
+
+/* Public check-in security + intake polish */
+.checkin-intro { display:flex; justify-content:space-between; align-items:flex-start; gap:24px; flex-wrap:wrap; }
+.checkin-security-wrap { margin-top: .35rem; padding:18px; border:1px solid rgba(6,29,73,.12); border-radius:12px; background:rgba(6,29,73,.025); }
+.checkin-security-wrap p { margin:5px 0 12px; color:var(--muted); }
+.checkin-security { min-height:74px; display:flex; flex-direction:column; gap:6px; }
+.checkin-security > div { min-height:65px; }
+.checkin-security-hint { font-size:.82rem; color:var(--muted); }
+.checkin-security-note { display:flex; flex-direction:column; gap:3px; padding:12px 14px; border-left:3px solid var(--red,#c81e2a); background:#fff8f8; }
+.checkin-security-note span { color:var(--muted); font-size:.88rem; }
+.checkin-honeypot { position:absolute !important; left:-10000px !important; top:auto !important; width:1px !important; height:1px !important; opacity:0 !important; pointer-events:none !important; }
+@media (max-width: 760px) { .checkin-intro { gap:12px; } .checkin-security-wrap { padding:15px; } }
+
+/* About-page work carousel */
+.about-portfolio { margin: 3rem 0 4rem; }
+.about-portfolio-heading { display:flex; align-items:flex-end; justify-content:space-between; gap:2rem; margin-bottom:1.25rem; }
+.about-portfolio-heading h2 { margin:.25rem 0 .45rem; }
+.about-portfolio-heading p { margin:0; max-width:680px; }
+.portfolio-controls { display:flex; gap:.65rem; flex-shrink:0; }
+.portfolio-controls button { width:44px; height:44px; border:1px solid rgba(0,0,0,.14); border-radius:50%; background:#fff; color:#111; font-size:1.8rem; line-height:1; cursor:pointer; transition:transform .2s ease, background .2s ease; }
+.portfolio-controls button:hover { transform:translateY(-2px); background:#f3f3f3; }
+.about-portfolio-track { display:flex; gap:1rem; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; padding:.25rem .1rem .8rem; }
+.about-portfolio-track::-webkit-scrollbar { display:none; }
+.portfolio-card { flex:0 0 min(330px, 78vw); scroll-snap-align:start; border:1px solid rgba(0,0,0,.1); border-radius:18px; overflow:hidden; background:#fff; box-shadow:0 10px 28px rgba(0,0,0,.08); }
+.portfolio-image-wrap { position:relative; aspect-ratio:16/10; overflow:hidden; background:#111; }
+.portfolio-image-wrap img { width:100%; height:100%; object-fit:cover; display:block; }
+.portfolio-concept { position:absolute; left:.75rem; bottom:.75rem; padding:.35rem .6rem; border-radius:999px; background:rgba(0,0,0,.68); color:#fff; font-size:.72rem; letter-spacing:.02em; }
+.portfolio-card-body { padding:1.15rem 1.2rem 1.25rem; }
+.portfolio-card-body h3 { margin:0 0 .45rem; font-size:1.08rem; }
+.portfolio-card-body p { margin:0; color:#666; line-height:1.55; font-size:.92rem; }
+@media (max-width:700px) { .about-portfolio-heading { align-items:flex-start; } .portfolio-controls { display:none; } .about-portfolio { margin-top:2.5rem; } }

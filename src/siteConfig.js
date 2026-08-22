@@ -7,10 +7,8 @@ export const siteConfig = {
   city: 'Oxford, Mississippi',
   serviceArea: 'Oxford and surrounding areas',
   domain: 'https://rebeltechoxford.com',
-  repairShopr: {
-    subdomain: 'rebeltech',
-    portalUrl: 'https://rebeltech.repairshopr.com',
-    ticketFormId: ''
+  customerPortal: {
+    url: '/customer-portal'
   },
   assets: {
     hero: '/assets/rebel-tech-hero.png',
@@ -38,6 +36,11 @@ export const siteConfig = {
       text: 'Audio/video installation, displays, cameras, automation, smart-home integration, control systems, and connected technology.'
     },
     {
+      title: 'Custom PCs, Servers & Business Hardware',
+      icon: '▤',
+      text: 'Custom gaming PCs, workstations, servers, laptops, and business hardware—built or sourced to fit the job, budget, and performance you need. We can also source Dell systems and enterprise-class server hardware when a proven platform makes sense.'
+    },
+    {
       title: 'Commercial & Residential',
       icon: '▥',
       text: 'Professional technology solutions for businesses and homes—from a single repair to complete infrastructure and installation projects.'
@@ -55,7 +58,8 @@ export const siteConfig = {
         'Build technology into a new space from the ground up with structured cabling, network infrastructure, Wi-Fi, cameras, AV, and other low-voltage systems.',
         'Improve an existing business without starting over—clean up networks, expand Wi-Fi coverage, replace aging equipment, and make the technology you already own work better together.',
         'Modernize operations when an older system is holding you back. For example, a restaurant may be ready to move from a traditional cash register to a modern POS platform such as Toast and add online ordering or delivery without the technology headache.',
-        'Support the everyday technology behind small businesses, including networking, workstations, printers, displays, connectivity, troubleshooting, and practical upgrades.'
+        'Support the everyday technology behind small businesses, including networking, workstations, printers, displays, connectivity, troubleshooting, and practical upgrades.',
+        'Source or build business hardware when it makes sense—from workstations and laptops to custom servers and enterprise-class systems for larger environments.'
       ]
     },
     {
@@ -69,7 +73,8 @@ export const siteConfig = {
         'Repair computers, laptops, phones, tablets, and other everyday devices—from hardware problems to software issues and upgrades.',
         'Fix home Wi-Fi and networking problems, including dead zones, unreliable connections, device setup, and expanding coverage.',
         'Install and configure TVs, audio/video equipment, home-office technology, printers, and other connected equipment.',
-        'Handle the weird technology problems too. If something is supposed to work and it does not, start with us and we will help figure it out.'
+        'Handle the weird technology problems too. If something is supposed to work and it does not, start with us and we will help figure it out.',
+        'Build a custom gaming PC or high-performance home workstation, or help choose and set up a new laptop or desktop that fits what you actually need.'
       ]
     },
     {

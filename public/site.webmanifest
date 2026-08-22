@@ -1,0 +1,15 @@
+{
+  "name": "Rebel Tech Oxford",
+  "short_name": "Rebel Tech",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#061d49",
+  "theme_color": "#061d49",
+  "icons": [
+    {
+      "src": "/assets/rebel-tech-favicon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

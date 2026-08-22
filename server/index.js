@@ -3,6 +3,7 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import nodemailer from 'nodemailer';
+import crypto from 'crypto';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,9 +21,75 @@ const SMTP_USER = process.env.SMTP_USER || 'b58e03001@smtp-brevo.com';
 const SMTP_PASS = process.env.SMTP_PASS || '';
 const MAIL_FROM = process.env.MAIL_FROM || 'info@rebeltechoxford.com';
 const MAIL_TO = process.env.MAIL_TO || 'info@rebeltechoxford.com';
+const TURNSTILE_SECRET = process.env.TURNSTILE_SECRET || '';
+const TURNSTILE_ACTION = process.env.TURNSTILE_ACTION || 'customer_checkin';
+const TURNSTILE_HOSTNAMES = new Set((process.env.TURNSTILE_HOSTNAMES || 'rebeltechoxford.com,www.rebeltechoxford.com').split(',').map(v => v.trim().toLowerCase()).filter(Boolean));
+const isProduction = process.argv.includes('--production') || process.env.NODE_ENV === 'production';
+
+const rateBuckets = new Map();
+const recentSubmissionHashes = new Map();
+
+function getClientIp(req) {
+  const cloudflareIp = String(req.headers['cf-connecting-ip'] || '').trim();
+  const forwarded = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+  return cloudflareIp || forwarded || String(req.socket.remoteAddress || 'unknown');
+}
+
+function rateLimit(req, key, max = 8, windowMs = 10 * 60 * 1000) {
+  const now = Date.now();
+  const bucketKey = `${key}:${getClientIp(req)}`;
+  const bucket = rateBuckets.get(bucketKey) || { count: 0, resetAt: now + windowMs };
+  if (now > bucket.resetAt) { bucket.count = 0; bucket.resetAt = now + windowMs; }
+  bucket.count += 1;
+  rateBuckets.set(bucketKey, bucket);
+  return bucket.count <= max;
+}
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, bucket] of rateBuckets) if (now > bucket.resetAt) rateBuckets.delete(key);
+  for (const [key, expiresAt] of recentSubmissionHashes) if (now > expiresAt) recentSubmissionHashes.delete(key);
+}, 15 * 60 * 1000).unref();
+
+async function verifyTurnstile(req, token) {
+  if (!TURNSTILE_SECRET) {
+    return isProduction ? { ok: false, reason: 'Turnstile is not configured.' } : { ok: true, skipped: true };
+  }
+  if (!token) return { ok: false, reason: 'Please complete the security check before submitting.' };
+
+  try {
+    const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ secret: TURNSTILE_SECRET, response: token, remoteip: getClientIp(req) })
+    });
+    const result = await response.json();
+    const hostname = String(result.hostname || '').toLowerCase();
+    const validAction = result.action === TURNSTILE_ACTION;
+    const validHostname = TURNSTILE_HOSTNAMES.has(hostname);
+    if (!result.success || !validAction || !validHostname) {
+      console.warn('Turnstile rejected check-in:', result['error-codes'] || result);
+      return { ok: false, reason: 'The security check could not be verified. Please try again.' };
+    }
+    return { ok: true };
+  } catch (error) {
+    console.error('Turnstile verification error:', error);
+    return { ok: false, reason: 'The security check is temporarily unavailable. Please try again in a moment.' };
+  }
+}
+
 const baseUrl = `https://${SUBDOMAIN}.repairshopr.com/api/v1`;
 
 app.use(express.json({ limit: '1mb' }));
+
+app.use((req, res, next) => {
+  const host = String(req.headers.host || '').split(':')[0].toLowerCase();
+  if (host === 'www.rebeltechoxford.com') {
+    return res.redirect(301, `https://rebeltechoxford.com${req.originalUrl}`);
+  }
+  next();
+});
+
 
 async function rsFetch(endpoint, options = {}) {
   if (!API_KEY) throw new Error('RepairShopr API key is not configured.');
@@ -126,36 +193,167 @@ app.post('/api/contact', async (req,res) => {
   }
 });
 
-app.post('/api/repairshopr/request', async (req,res) => {
-  if (!API_KEY || !FORM_ID) {
+function clean(value, max = 5000) {
+  return String(value ?? '').trim().slice(0, max);
+}
+
+function checkInDescription(body) {
+  return [
+    `Customer type: ${clean(body.customerType) || 'Not specified'}`,
+    `Need: ${clean(body.need) || 'Not specified'}`,
+    `Business / organization: ${clean(body.business) || 'Not provided'}`,
+    `Preferred contact: ${clean(body.contactPreference) || 'Either'}`,
+    '',
+    'Customer description:',
+    clean(body.description)
+  ].join('\n');
+}
+
+async function handleCustomerCheckIn(req, res) {
+
+  if (!rateLimit(req, 'customer-check-in', 8, 10 * 60 * 1000)) {
+    return res.status(429).json({ error: 'Too many check-in attempts from this connection. Please wait a few minutes or call Rebel Tech directly.' });
+  }
+
+  if (!API_KEY) {
     return res.status(503).json({
-      error: 'RepairShopr is not configured yet. Add REPAIRSHOPR_API_KEY and REPAIRSHOPR_TICKET_FORM_ID to the GoDaddy environment secrets.'
+      error: 'Online check-in is temporarily unavailable. Please call Rebel Tech directly or try again later.'
     });
   }
 
+  const body = req.body || {};
+  const firstName = clean(body.firstName, 80);
+  const lastName = clean(body.lastName, 80);
+  const businessName = clean(body.business, 160);
+  const email = clean(body.email, 254);
+  const phone = clean(body.phone, 50);
+  const customerType = clean(body.customerType, 80);
+  const need = clean(body.need, 160);
+  const description = clean(body.description, 5000);
+  const contactPreference = clean(body.contactPreference, 30) || 'Either';
+  const honeypot = clean(body.website, 120);
+
+  if (honeypot) {
+    return res.status(400).json({ error: 'We could not process that request.' });
+  }
+
+  const turnstile = await verifyTurnstile(req, clean(body.turnstileToken, 2048));
+  if (!turnstile.ok) {
+    return res.status(isProduction && !TURNSTILE_SECRET ? 503 : 403).json({ error: turnstile.reason });
+  }
+
+  if (!firstName || !lastName || !email || !phone || !customerType || !need || !description) {
+    return res.status(400).json({ error: 'Please complete your name, contact information, what you need help with, and a short description.' });
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res.status(400).json({ error: 'Please provide a valid email address.' });
+  }
+
+  const submissionHash = crypto.createHash('sha256').update([email.toLowerCase(), phone.replace(/\D/g, ''), need.toLowerCase(), description.toLowerCase()].join('|')).digest('hex');
+  if (recentSubmissionHashes.has(submissionHash)) {
+    return res.status(409).json({ error: 'That request was already submitted. We have it and will follow up with you.' });
+  }
+  recentSubmissionHashes.set(submissionHash, Date.now() + 2 * 60 * 1000);
+
+  const ticketEligible = Boolean(body.ticketEligible) && Boolean(FORM_ID);
+  const subject = `${customerType} — ${need}`.slice(0, 180);
+  const details = checkInDescription(body);
+
   try {
-    const body = req.body || {};
-    const payload = {
-      ...body,
-      name: body.name || '',
-      email: body.email || '',
-      phone: body.phone || '',
-      description: body.description || '',
-      subject: body.subject || 'Website Request'
+    // RepairShopr's Leads API is the source of truth for the initial sales/intake record.
+    // from_check_in marks this as website check-in data; ticket_* fields keep the
+    // qualification visible even when the request is not immediately ticketed.
+    const leadPayload = {
+      first_name: firstName,
+      last_name: lastName,
+      email,
+      phone,
+      business_name: businessName,
+      from_check_in: true,
+      status: 'new',
+      ticket_subject: subject,
+      ticket_description: details,
+      ticket_problem_type: need,
+      hidden_notes: `Website Check-In\nCustomer type: ${customerType}\nNeed: ${need}\nPreferred contact: ${contactPreference}`
     };
 
-    const data = await rsFetch(
-      `/new_ticket_forms/${encodeURIComponent(FORM_ID)}/process_form`,
-      { method:'POST', body:JSON.stringify(payload) }
-    );
+    const leadData = await rsFetch('/leads', {
+      method: 'POST',
+      body: JSON.stringify(leadPayload)
+    });
 
-    return res.json({ ok:true, data });
+    let ticketCreated = false;
+    let ticketData = null;
+
+    if (ticketEligible) {
+      ticketData = await rsFetch(
+        `/new_ticket_forms/${encodeURIComponent(FORM_ID)}/process_form`,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            first_name: firstName,
+            last_name: lastName,
+            name: `${firstName} ${lastName}`,
+            email,
+            phone,
+            business: businessName,
+            business_name: businessName,
+            service: need,
+            subject: `Website Check-In — ${subject}`,
+            ticket_type: 'Website Check-In',
+            description: details,
+            problem_type: need,
+            source: 'Website Check-In'
+          })
+        }
+      );
+      ticketCreated = true;
+    }
+
+    return res.json({
+      ok: true,
+      ticketCreated,
+      lead: leadData,
+      ticket: ticketData,
+      scheduling: {
+        ready: Boolean(process.env.REPAIRSHOPR_SCHEDULING_WIDGET_URL),
+        widgetConfigured: Boolean(process.env.REPAIRSHOPR_SCHEDULING_WIDGET_URL)
+      }
+    });
   } catch (error) {
-    return res.status(502).json({ error:error.message });
+    console.error('RepairShopr check-in error:', error);
+    console.error('Customer check-in integration error:', error);
+    return res.status(502).json({ error: 'We could not complete your check-in right now. Please try again or call Rebel Tech directly.' });
   }
+}
+
+// Public-facing customer intake endpoint. The CRM provider remains an internal implementation detail.
+app.post('/api/customer/check-in', handleCustomerCheckIn);
+
+// Backward-compatible endpoint for the older request form.
+app.post('/api/repairshopr/request', async (req,res) => {
+  const body = req.body || {};
+  const [firstName, ...rest] = clean(body.name, 160).split(/\s+/).filter(Boolean);
+  const lastName = rest.join(' ');
+  req.body = {
+    firstName: firstName || 'Website',
+    lastName: lastName || 'Customer',
+    business: '',
+    email: body.email,
+    phone: body.phone,
+    customerType: 'business',
+    need: body.service || 'Other',
+    description: body.description || body.message,
+    contactPreference: 'Either',
+    ticketEligible: true,
+    source: 'Legacy Website Request'
+  };
+  return handleCustomerCheckIn(req, res);
 });
 
-const isProduction = process.argv.includes('--production') || process.env.NODE_ENV === 'production';
+app.get('/customer-portal', (_req, res) => {
+  res.redirect(302, `https://${SUBDOMAIN}.repairshopr.com`);
+});
 
 if (isProduction) {
   const dist = path.join(__dirname, '..', 'dist');
