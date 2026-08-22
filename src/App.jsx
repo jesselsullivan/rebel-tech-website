@@ -34,7 +34,7 @@ function Header() {
         </nav>
         <div className="header-actions">
           <a className="phone-link" href={`tel:${site.phone}`}>{site.phoneDisplay}</a>
-          <NavLink className="btn btn-red" to="/service-request">Request Service</NavLink>
+          <NavLink className="btn btn-red" to="/service-request">Customer Check-In</NavLink>
         </div>
         <details ref={menuRef} className="mobile-menu">
           <summary>☰</summary>
@@ -75,7 +75,7 @@ function Footer() {
             <span>Saturday: 9 AM–2 PM</span>
             <span>Sunday: Closed</span>
           </div>
-          <a href={site.repairShopr.portalUrl} target="_blank" rel="noreferrer">Customer Portal ↗</a>
+          <a href={site.customerPortal.url} target="_blank" rel="noreferrer">Customer Portal ↗</a>
         </div>
       </div>
       <div className="footer-bottom">

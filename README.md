@@ -9,7 +9,7 @@ React + Vite + Node.js website for Rebel Tech Oxford LLC.
 - Bootstrap 5.3
 - Material UI buttons/forms
 - Express / Node.js
-- RepairShopr API proxy
+- CRM API proxy
 - Transparent Rebel Tech artwork
 - Responsive video hero
 
@@ -33,7 +33,7 @@ npm start
 
 Open http://localhost:3000
 
-## RepairShopr
+## CRM integration
 
 Copy `.env.example` to `.env` and provide:
 
@@ -53,7 +53,7 @@ Upload/deploy the project as a Node.js application. GoDaddy's Node.js hosting su
 npm start
 ```
 
-Set the RepairShopr secrets in GoDaddy rather than committing them to the project.
+Set the CRM integration secrets in GoDaddy rather than committing them to the project.
 
 ## Hero video
 
@@ -104,4 +104,33 @@ Required for the current website integrations:
 - `REPAIRSHOPR_TICKET_FORM_ID` — the ID of the RepairShopr New Ticket Form the website should submit to.
 - `SMTP_PASS` — your Brevo SMTP key.
 
-The RepairShopr subdomain is already set to `rebeltech`. The website uses the New Ticket Form API endpoint to create tickets. RepairShopr's official API documentation confirms `GET /new_ticket_forms` and `POST /new_ticket_forms/{id}/process_form` for this workflow. 
+The RepairShopr subdomain is already set to `rebeltech`. The website uses the New Ticket Form API endpoint to create tickets. The server-side integration uses the configured CRM's lead and ticket-form endpoints; API credentials remain server-side. 
+
+## Customer Check-In / CRM flow
+
+The `/service-request` page is now a structured customer check-in. It captures contact information, customer type, need category, description, and preferred contact method. The server posts a lead to RepairShopr first. Requests that are eligible and have `REPAIRSHOPR_TICKET_FORM_ID` configured are also sent through the RepairShopr ticket form.
+
+Scheduling is intentionally kept separate from intake. `REPAIRSHOPR_SCHEDULING_WIDGET_URL` is reserved for the future availability widget so future appointment selection can use RepairShopr's real availability rather than inventing slots on the website.
+
+## Public Customer Check-In protection
+
+The public `/service-request` flow is deliberately kept separate from the future `portal.rebeltechoxford.com` application. It is designed to create a RepairShopr lead only after the public request passes validation and bot protection.
+
+The check-in now includes:
+
+- Cloudflare Turnstile verification immediately before the RepairShopr API call. Turnstile tokens are validated server-side; the secret never reaches the browser.
+- A hidden honeypot field for simple scripted submissions.
+- Server-side request rate limiting.
+- A short duplicate-submission guard to prevent accidental double submissions from creating repeated leads.
+- No public RepairShopr API credentials. The browser only talks to this website's `/api/customer/check-in` endpoint.
+
+For production, configure a Turnstile widget for `rebeltechoxford.com` (and `www.rebeltechoxford.com` if that hostname is allowed to serve the page), then set `VITE_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET`, `TURNSTILE_ACTION`, and `TURNSTILE_HOSTNAMES` in the Node.js environment. Production check-ins fail closed if the server-side Turnstile secret is missing.
+
+Cloudflare's current Turnstile documentation requires both the client-side widget and server-side Siteverify validation; tokens expire after five minutes and can only be used once.
+
+## Current public-site scope
+
+This ZIP intentionally focuses on `rebeltechoxford.com` and its public customer intake. The future `portal.rebeltechoxford.com` internal web application is not part of this build. Both can share the same RepairShopr-backed architecture later without exposing internal functionality on the public site.
+
+## Public check-in flow
+The public check-in intentionally starts with only two audience choices: **Personal / Residential** or **Business / Commercial**. Each follow-up service category is a single-purpose choice rather than a combined slash category. The separate internal customer portal is not part of this public-site build.
