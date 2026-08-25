@@ -134,3 +134,20 @@ This ZIP intentionally focuses on `rebeltechoxford.com` and its public customer 
 
 ## Public check-in flow
 The public check-in intentionally starts with only two audience choices: **Personal / Residential** or **Business / Commercial**. Each follow-up service category is a single-purpose choice rather than a combined slash category. The separate internal customer portal is not part of this public-site build.
+
+
+## Service-area and travel pricing
+
+The public service-request form now validates the service address before Turnstile/submission. It uses the configured service origin, a 50-mile standard service radius, a 15-minute included-drive threshold, and a $2/mile extended-travel rate by default.
+
+These settings live in `.env`:
+- `SERVICE_BASE_ADDRESS`
+- `SERVICE_RADIUS_MILES`
+- `INCLUDED_DRIVE_MINUTES`
+- `TRAVEL_RATE_PER_MILE`
+
+The public `/api/service-area/check` endpoint geocodes the address and calculates driving distance/time. The final `/api/customer/check-in` submission independently recalculates the result server-side so client-side values cannot be trusted for pricing or eligibility.
+
+The current website workflow intentionally creates a RepairShopr lead only. Online requests remain pending Rebel Tech review until the future FSM/portal approves the work and scheduling. The future on-site iPad workflow can use the same intake data model without this approval gate.
+
+The routing/geocoding defaults are Nominatim and OSRM for prototyping. Before production traffic grows, move these requests behind an appropriate production routing/geocoding provider or proxy with a suitable usage policy.

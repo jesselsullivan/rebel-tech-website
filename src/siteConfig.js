@@ -4,8 +4,16 @@ export const siteConfig = {
   tagline: 'Connect. Repair. Install.',
   phone: '662-281-2970',
   phoneDisplay: '(662) 281-2970',
+  email: 'info@rebeltechoxford.com',
+  facebook: 'https://facebook.com/rebeltechoxford',
   city: 'Oxford, Mississippi',
   serviceArea: 'Oxford and surrounding areas',
+  serviceAreaRules: {
+    baseAddress: '118 Glen Alden Cir, Oxford, MS 38655',
+    radiusMiles: 50,
+    includedDriveMinutes: 15,
+    travelRatePerMile: 2
+  },
   domain: 'https://rebeltechoxford.com',
   customerPortal: {
     url: '/customer-portal'

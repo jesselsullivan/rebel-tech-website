@@ -68,6 +68,8 @@ function Footer() {
         <div>
           <h4>Contact</h4>
           <a href={`tel:${site.phone}`}>{site.phoneDisplay}</a>
+          <a href={`mailto:${site.email}`}>{site.email}</a>
+          <a href={site.facebook} target="_blank" rel="noreferrer">Facebook ↗</a>
           <p>{site.city}<br />{site.serviceArea}</p>
           <div className="footer-hours">
             <strong>Hours</strong>

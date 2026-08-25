@@ -20,11 +20,6 @@ const paths = {
   }
 };
 
-const quickTicketOptions = new Set([
-  'Computer Repair', 'Phone Repair', 'Network / Wi-Fi',
-  'TV & AV Installation', 'Smart Home', 'Something Else'
-]);
-
 function TurnstileGate({ siteKey, token, onToken }) {
   const containerRef = useRef(null);
   const widgetIdRef = useRef(null);
@@ -59,7 +54,6 @@ function TurnstileGate({ siteKey, token, onToken }) {
     };
   }, [siteKey, onToken]);
 
-
   if (!siteKey) {
     return (
       <div className="checkin-security-note">
@@ -77,26 +71,134 @@ function TurnstileGate({ siteKey, token, onToken }) {
   );
 }
 
+function ServiceAreaStatus({ result, customerType }) {
+  if (!result) return null;
+
+  if (result.status === 'checking') {
+    return (
+      <div className="service-area-status service-area-neutral" role="status" aria-live="polite">
+        <strong>Checking this service address…</strong>
+        <span>We’re confirming your location and travel information.</span>
+      </div>
+    );
+  }
+
+  if (result.status === 'error') {
+    return (
+      <div className="service-area-status service-area-neutral" role="status" aria-live="polite">
+        <strong>We couldn't verify that address yet.</strong>
+        <span>{result.message} Please check the address and try again.</span>
+      </div>
+    );
+  }
+
+  if (result.outsideRadius) {
+    const businessMessage = customerType === 'business';
+    const residentialMessage = customerType === 'residential';
+    return (
+      <div className="service-area-status service-area-red" role="status" aria-live="polite">
+        <strong>
+          {businessMessage
+            ? 'This location is outside our standard service area.'
+            : residentialMessage
+              ? 'This address is outside our standard residential service area.'
+              : 'This location is outside our standard service area.'}
+        </strong>
+        <span>
+          {businessMessage
+            ? 'We’d be happy to discuss your project and determine whether we can accommodate the location. You can still submit this request for review.'
+            : residentialMessage
+              ? 'We currently do not accept standard residential service requests at this location. Please contact us if you believe there are special circumstances we should consider.'
+              : 'Select whether this is a residential or business request to see the appropriate next step.'}
+        </span>
+        {result.distanceMiles != null && <small>{result.distanceMiles} miles from our standard service-area origin.</small>}
+      </div>
+    );
+  }
+
+  if (result.extendedTravel) {
+    return (
+      <div className="service-area-status service-area-yellow" role="status" aria-live="polite">
+        <strong>You’re within our standard service area.</strong>
+        <span>
+          This location requires additional travel, so an <b>${result.travelCharge}</b> extended-travel charge will apply to service at this address.
+        </span>
+        <small>{result.distanceMiles} road miles · approximately {result.driveMinutes} minutes by car.</small>
+      </div>
+    );
+  }
+
+  return (
+    <div className="service-area-status service-area-green" role="status" aria-live="polite">
+      <strong>You’re within our standard service area.</strong>
+      <span>No additional travel charge applies to this location.</span>
+      <small>{result.distanceMiles} road miles · approximately {result.driveMinutes} minutes by car.</small>
+    </div>
+  );
+}
+
 export default function ServiceRequest() {
   const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY || '';
   const [formState, setFormState] = useState({
     firstName: '', lastName: '', business: '', email: '', phone: '',
-    customerType: '', need: '', description: '', contactPreference: 'Either', website: ''
+    customerType: '', need: '', description: '', contactPreference: 'Either',
+    address: '', website: ''
   });
   const [status, setStatus] = useState({ type: '', message: '' });
   const [loading, setLoading] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState('');
   const [turnstileResetKey, setTurnstileResetKey] = useState(0);
+  const [serviceArea, setServiceArea] = useState(null);
 
   const selectedPath = paths[formState.customerType];
-  const ticketEligible = useMemo(() => quickTicketOptions.has(formState.need), [formState.need]);
 
   const update = (field, value) => setFormState(current => ({ ...current, [field]: value }));
+
+  useEffect(() => {
+    const address = formState.address.trim();
+    if (address.length < 8) {
+      setServiceArea(null);
+      return undefined;
+    }
+
+    let cancelled = false;
+    const timer = window.setTimeout(async () => {
+      setServiceArea({ status: 'checking' });
+      try {
+        const params = new URLSearchParams({ address });
+        const res = await fetch(`/api/service-area/check?${params.toString()}`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'We could not verify that address.');
+        if (!cancelled) setServiceArea(data);
+      } catch (error) {
+        if (!cancelled) setServiceArea({ status: 'error', message: error.message });
+      }
+    }, 650);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [formState.address]);
+
+  const handleToken = useMemo(() => value => setTurnstileToken(value), []);
 
   const submit = async e => {
     e.preventDefault();
     setLoading(true);
     setStatus({ type: '', message: '' });
+
+    if (!serviceArea || serviceArea.status !== 'ready') {
+      setLoading(false);
+      setStatus({ type: 'error', message: 'Please enter a valid service address and wait for the service-area check to finish.' });
+      return;
+    }
+
+    if (serviceArea.outsideRadius && formState.customerType === 'residential') {
+      setLoading(false);
+      setStatus({ type: 'error', message: 'That residential address is outside our standard service area, so an online service request cannot be submitted for it.' });
+      return;
+    }
 
     if (turnstileSiteKey && !turnstileToken) {
       setLoading(false);
@@ -110,7 +212,14 @@ export default function ServiceRequest() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formState,
-          ticketEligible,
+          serviceArea: {
+            distanceMiles: serviceArea.distanceMiles,
+            driveMinutes: serviceArea.driveMinutes,
+            outsideRadius: serviceArea.outsideRadius,
+            extendedTravel: serviceArea.extendedTravel,
+            travelCharge: serviceArea.travelCharge
+          },
+          ticketEligible: false,
           turnstileToken,
           source: 'Website Check-In'
         })
@@ -122,21 +231,23 @@ export default function ServiceRequest() {
 
       setStatus({
         type: 'success',
-        message: data.ticketCreated
-          ? 'You are checked in. Your request is now in the Rebel Tech service queue.'
-          : 'You are checked in. We have your information and will follow up about the project.'
+        message: data.message || 'Thanks — we have your request. Rebel Tech will review it and follow up about the next step.'
       });
-      setFormState({ firstName:'', lastName:'', business:'', email:'', phone:'', customerType:'', need:'', description:'', contactPreference:'Either', website:'' });
+      setFormState({
+        firstName:'', lastName:'', business:'', email:'', phone:'', customerType:'',
+        need:'', description:'', contactPreference:'Either', address:'', website:''
+      });
+      setServiceArea(null);
       setTurnstileToken('');
       setTurnstileResetKey(value => value + 1);
     } catch (err) {
       setTurnstileToken('');
       setTurnstileResetKey(value => value + 1);
       setStatus({ type: 'error', message: err.message });
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   };
-
-  const handleToken = useMemo(() => value => setTurnstileToken(value), []);
 
   return (
     <section className="page">
@@ -157,7 +268,7 @@ export default function ServiceRequest() {
             <div>
               <div className="eyebrow">NEW CHECK-IN</div>
               <h2>Start with the basics.</h2>
-              <p className="muted">This starts a request with Rebel Tech. We will review what you send us and contact you about the next step. No pricing or appointment is assumed by submitting this form.</p>
+              <p className="muted">This starts a request with Rebel Tech. We review every online request before it becomes a scheduled service job. No appointment is assumed by submitting this form.</p>
             </div>
             <span className="api-badge">Secure intake</span>
           </div>
@@ -169,11 +280,28 @@ export default function ServiceRequest() {
             <div className="col-md-6"><label>Phone<input required type="tel" autoComplete="tel" value={formState.phone} onChange={e=>update('phone',e.target.value)} placeholder="(662) 281-2970" /></label></div>
             <div className="col-md-6"><label>Email<input required type="email" autoComplete="email" value={formState.email} onChange={e=>update('email',e.target.value)} placeholder="you@example.com" /></label></div>
 
+            <div className="col-12 checkin-divider"><h3>Where will the service take place?</h3><p className="muted">Enter the address where you need Rebel Tech to perform the work. We’ll check the service area before you submit anything.</p></div>
+            <div className="col-12">
+              <label>Service Address
+                <input
+                  required
+                  autoComplete="street-address"
+                  value={formState.address}
+                  onChange={e=>update('address',e.target.value)}
+                  placeholder="Street address, city, state ZIP"
+                  aria-describedby="service-area-status"
+                />
+              </label>
+            </div>
+            <div id="service-area-status" className="col-12">
+              <ServiceAreaStatus result={serviceArea} customerType={formState.customerType} />
+            </div>
+
             <div className="col-12 checkin-divider"><h3>What kind of help do you need?</h3></div>
             <div className="col-12">
               <div className="checkin-choice-grid">
                 {Object.entries(paths).map(([key, path]) => (
-                  <button key={key} type="button" className={`checkin-choice ${formState.customerType === key ? 'selected' : ''}`} onClick={()=>{ update('customerType',key); update('need',''); }}>
+                  <button key={key} type="button" className={`checkin-choice ${formState.customerType === key ? 'selected' : ''}`} onClick={()=>{ update('customerType',key); }}>
                     <strong>{path.label}</strong>
                     <span>{key === 'residential' ? 'For you, your home, or personal technology' : 'For your business, office, or commercial property'}</span>
                   </button>
@@ -194,8 +322,8 @@ export default function ServiceRequest() {
             <input className="checkin-honeypot" tabIndex="-1" autoComplete="off" aria-hidden="true" value={formState.website} onChange={e=>update('website',e.target.value)} />
 
             <div className="col-12 checkin-next-step">
-              <strong>{ticketEligible ? 'This looks like a straightforward service request.' : 'This looks like a project or consultation.'}</strong>
-              <span>{ticketEligible ? 'We can send it into the Rebel Tech service queue after verification.' : 'We will save your project details so Rebel Tech can follow up and scope it properly.'}</span>
+              <strong>What happens after you submit?</strong>
+              <span>Rebel Tech reviews the request, confirms the job is a good fit, and checks scheduling before turning it into a service ticket/appointment.</span>
             </div>
 
             <div className="col-12 checkin-security-wrap">
@@ -205,7 +333,9 @@ export default function ServiceRequest() {
             </div>
 
             <div className="col-12 d-flex align-items-center gap-3 flex-wrap">
-              <Button type="submit" variant="contained" disabled={loading || Boolean(turnstileSiteKey && !turnstileToken)} className="mui-red-button">{loading ? <CircularProgress size={20} color="inherit" /> : 'Check In →'}</Button>
+              <Button type="submit" variant="contained" disabled={loading || Boolean(turnstileSiteKey && !turnstileToken)} className="mui-red-button">
+                {loading ? <CircularProgress size={20} color="inherit" /> : 'Send Service Request →'}
+              </Button>
               {status.message && <div className={status.type === 'success' ? 'form-success' : 'form-error'}>{status.message}</div>}
             </div>
           </form>
@@ -214,7 +344,7 @@ export default function ServiceRequest() {
         <div className="schedule-placeholder">
           <div className="eyebrow">WHAT HAPPENS NEXT</div>
           <h3>We review it, then we talk.</h3>
-          <p>For now, every request comes to Rebel Tech for review. Straightforward service requests can be routed into the service queue, while larger projects stay as leads so we can scope the work before talking price or scheduling. Online pricing and appointment scheduling can be added later without rebuilding this intake flow.</p>
+          <p>For now, every online request comes to Rebel Tech for review. We confirm that we can take on the work and that the schedule makes sense before it becomes a service ticket or appointment.</p>
         </div>
       </div>
     </section>
